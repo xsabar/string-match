@@ -125,11 +125,11 @@ static void ac_search_full(const AC *ac, const char *s, int slen, match_result_t
         state_id = trie_get_trans(ac->trie, state_id, s[i]);
         TrieState *state = &ac->trie->states[state_id];
         if (state->is_fin) {
-            match_result_append(result, state->pattern, state->plen, i - state->plen + 1);
+            match_result_append(result, state->depth, i - state->depth + 1);
         }
         for (int id = ac->suff[state_id]; id != -1; id = ac->suff[id]) {
             state = &ac->trie->states[id];
-            match_result_append(result, state->pattern, state->plen, i - state->plen + 1);
+            match_result_append(result, state->depth, i - state->depth + 1);
         }
     }
 }
@@ -144,11 +144,11 @@ static void ac_search_part(const AC *ac, const char *s, int slen, match_result_t
             state_id = target;
             TrieState *state = &ac->trie->states[target];
             if (state->is_fin) {
-                match_result_append(result, state->pattern, state->plen, i - state->plen);
+                match_result_append(result, state->depth, i - state->depth);
             }
             for (int id = ac->suff[target]; id != -1; id = ac->suff[id]) {
                 state = &ac->trie->states[id];
-                match_result_append(result, state->pattern, state->plen, i - state->plen);
+                match_result_append(result, state->depth, i - state->depth);
             }
         } else {
             state_id = ac->next[state_id];

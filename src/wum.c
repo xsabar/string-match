@@ -179,7 +179,7 @@ void wum_search(const Wum *wum, const char *s, int slen, match_result_t *result)
         wum_slist_node_t *node = list->first;
         while (node != NULL) {
             if (node->len - 1 <= i && (memcmp(node->str, s + i - node->len + 1, node->len) == 0)) {
-                match_result_append(result, node->str, node->len, i - node->len + 1);
+                match_result_append(result, node->len, i - node->len + 1);
             }
             node = node->next;
         }

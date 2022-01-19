@@ -84,7 +84,7 @@ void bndm_nfa_search(const BndmNFA *nfa, const char *s, int slen, match_result_t
 						const _bndm_pattern_t *pattern = &nfa->patterns[pos / nfa->min_len];
 						int start_pos = i + nfa->min_len - pattern->len;
 						if (start_pos >= 0 && (memcmp(pattern->str, s + start_pos, pattern->len - nfa->min_len) == 0)) {
-							match_result_append(result, pattern->str, pattern->len, start_pos);
+							match_result_append(result, pattern->len, start_pos);
 						}
 					}
 				}

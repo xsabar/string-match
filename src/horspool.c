@@ -68,14 +68,21 @@ void horspool_build(Horspool *hsp) {
 	for (int i = 0; i < hsp->size; i++) {
 		hsp->shift[i] = hsp->min_len - hsp->block_size + 1;
 	}
+	
 	for (int i = 0; i < hsp->trie->state_num; i++) {
 		TrieState *state = &hsp->trie->states[i];
 		if (!state->is_fin) {
 			continue;
 		}
-		for (int j = state->plen - hsp->min_len + hsp->block_size - 1; j < state->plen - 1; j++) {
-			int shift = state->plen - j - 1;
-			int pos = horspool_hash(state->pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
+		char pattern[state->depth];
+		TrieState *curr = state;
+		for (int i = state->depth - 1; i >= 0; i--) {
+			pattern[i] = curr->c;
+			curr = curr->parent;
+		}
+		for (int j = state->depth - hsp->min_len + hsp->block_size - 1; j < state->depth - 1; j++) {
+			int shift = state->depth - j - 1;
+			int pos = horspool_hash(pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
 			if (hsp->shift[pos] > shift) {
 				hsp->shift[pos] = shift;
 			}
@@ -93,7 +100,7 @@ void horspool_trie_search(const Horspool *hsp, const char *s, int slen, match_re
 			}
 			TrieState *state = &trie->states[state_id];
 			if (state->is_fin) {
-				match_result_append(result, state->pattern, state->plen, j);
+				match_result_append(result, state->depth, j);
 			}
 		}
 		int hash = horspool_hash(s + i - hsp->block_size + 1, hsp->block_size, hsp->base);

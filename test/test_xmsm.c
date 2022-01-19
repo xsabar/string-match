@@ -13,10 +13,15 @@
 
 static STTableType type = STTABLE_TYPE_ARRAY;
 
-static void print_result(const char *name, const match_result_t* result) {
+static void print_result(const char *name, const char *s, const match_result_t* result) {
     printf("%16s: ", name);
-    for (int i = 0; i < result->num; i++) {
-        printf("(%d, %s) ", result->items[i].pos, result->items[i].pattern);
+    for (int i = 0; i < result->size; i++) {
+        int pos = result->items[i].pos;
+        printf("(%d, %c", pos, s[pos]);
+        for (int j = 1; j < result->items[i].len; j++) {
+            printf("%c", s[pos + j]);
+        }
+        printf(") ");
     }
     printf("\n");
 }
@@ -33,7 +38,7 @@ static void trie_search_test(const char *s, int slen, const char **patterns, int
     Trie* trie = trie_create_ex(patterns, num, type);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     trie_search(trie, s, slen, result);
-    print_result("trie search", result);
+    print_result("trie search", s, result);
     match_result_destroy(result);
     trie_destroy(trie);
 }
@@ -42,7 +47,7 @@ static void ac_full_search_test(const char *s, int slen, const char **patterns, 
     AC* ac = ac_create_ex(patterns, num, AC_LEVEL_FULL);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     ac_search(ac, s, slen, result);
-    print_result("ac_full search", result);
+    print_result("ac_full search", s, result);
     match_result_destroy(result);
     ac_destroy(ac);
 }
@@ -51,7 +56,7 @@ static void ac_part_search_test(const char *s, int slen, const char **patterns, 
     AC* ac = ac_create_ex(patterns, num, AC_LEVEL_PART);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     ac_search(ac, s, slen, result);
-    print_result("ac_part search", result);
+    print_result("ac_part search", s, result);
     match_result_destroy(result);
     ac_destroy(ac);
 }
@@ -60,7 +65,7 @@ static void sbom_search_test(const char *s, int slen, const char **patterns, int
     Oracle *orc = oracle_create_ex(patterns, num, type);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     oracle_search(orc, s, slen, result);
-    print_result("sbom search", result);
+    print_result("sbom search", s, result);
     match_result_destroy(result);
     oracle_destroy(orc);
 }
@@ -69,7 +74,7 @@ static void shift_search_test(const char *s, int slen, const char **patterns, in
     ShiftNFA *nfa = shift_nfa_create_ex(patterns, num);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     shift_nfa_search(nfa, s, slen, result);
-    print_result("shift search", result);
+    print_result("shift search", s, result);
     match_result_destroy(result);
     shift_nfa_destroy(nfa);
 }
@@ -78,7 +83,7 @@ static void bndm_search_test(const char *s, int slen, const char **patterns, int
     BndmNFA *nfa = bndm_nfa_create_ex(patterns, num);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     bndm_nfa_search(nfa, s, slen, result);
-    print_result("bndm search", result);
+    print_result("bndm search", s, result);
     match_result_destroy(result);
     bndm_nfa_destroy(nfa);
 }
@@ -87,7 +92,7 @@ static void horspool_search_test(const char *s, int slen, const char **patterns,
     Horspool *hsp = horspool_create_ex(patterns, num, 1);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     horspool_trie_search(hsp, s, slen, result);
-    print_result("horspool search", result);
+    print_result("horspool search", s, result);
     match_result_destroy(result);
     horspool_destroy(hsp);
 }
@@ -96,7 +101,7 @@ static void wum_search_test(const char *s, int slen, const char **patterns, int 
     Wum *wum = wum_create_ex(patterns, num, 1);
     match_result_t *result = match_result_create(MAX_MATCH_NUM);
     wum_search(wum, s, slen, result);
-    print_result("wum search", result);
+    print_result("wum search", s, result);
     match_result_destroy(result);
     wum_destroy(wum);
 }

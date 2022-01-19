@@ -24,12 +24,6 @@ Trie* trie_create_ex(const char **patterns, int pnum, STTableType sttype) {
 
 void trie_destroy(Trie *trie) {
     free(trie->states);
-    for (int i = 1; i < trie->state_num; i++) {
-        TrieState *state = &trie->states[i];
-        if (state->is_fin) {
-            free(state->pattern);
-        }
-    }
     sttable_destroy(trie->sttbl);
     free(trie->bfs_states);
     free(trie);
@@ -87,7 +81,7 @@ void trie_search(const Trie *trie, const char *s, int slen, match_result_t* resu
         while (j < slen && (state_id = trie_get_trans(trie, state_id, s[j])) != -1) {
             state = &trie->states[state_id];
             if (state->is_fin) {
-                if (match_result_append(result, state->pattern, state->plen, j - state->plen + 1) != 0) {
+                if (match_result_append(result, state->depth, i) != 0) {
                     return;
                 }
             }
@@ -156,28 +150,6 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
 }
 
 /**
- * @brief 设置终止状态
- * 
- * @param trie  树指针
- * @param state 状态指针
- * @param p     模式串
- * @param plen  模式串长度
- * @return int 0:成功 1:失败
- */
-static int trie_set_fin_state(Trie *trie, TrieState *state, const char *p, int plen) {
-    state->pattern = malloc(plen + 1);
-    if (NULL == state->pattern) {
-        return -1;
-    }
-    state->is_fin = 1;
-    state->fid = trie->fin_state_num;
-    state->plen = plen;
-    strncpy(state->pattern, p, plen + 1);
-    ++trie->fin_state_num;
-    return 0;
-}
-
-/**
  * @brief 插入模式串
  * 
  * @param trie 树指针
@@ -210,7 +182,9 @@ static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, i
     }
     TrieState *state = &trie->states[act_state_id];
     if (!state->is_fin) {
-        trie_set_fin_state(trie, state, p, plen);
+        state->is_fin = 1;
+        state->fid = trie->fin_state_num;
+        ++trie->fin_state_num;
     }
     return &trie->states[act_state_id];
 }

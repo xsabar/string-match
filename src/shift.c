@@ -73,7 +73,7 @@ void shift_nfa_search(const ShiftNFA *snfa, const char *s, int slen, match_resul
 		bit_array_and(&fin_status, &snfa->fin_mask);
 		while ((pos = bit_array_pop(&fin_status)) != -1) {
 			const _snfa_pattern_t *pattern = &snfa->patterns[pos / snfa->max_len];
-			match_result_append(result, pattern->str, pattern->len, i - pattern->len + 1);
+			match_result_append(result, pattern->len, i - pattern->len + 1);
 		}
 	}
 }

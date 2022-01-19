@@ -96,7 +96,7 @@ void oracle_search(const Oracle *orc, const char *s, int slen, match_result_t *r
                 while (node != NULL) {
                     int pos = i + min_len - node->len;
                     if (pos >= 0 && memcmp(s + pos, node->str, node->len - min_len) == 0) {
-                        match_result_append(result, node->str, node->len, pos);
+                        match_result_append(result, node->len, pos);
                     }
                     node = node->next;
                 }

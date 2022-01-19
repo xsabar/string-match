@@ -13,8 +13,6 @@ typedef struct _trie_state_s {
     int fid;              // 终止状态id
     int is_fin;           // 终止状态标记
     int depth;            // 在树中的深度
-    int plen;             // 模式串长度
-    char *pattern;        // 模式串
     struct _trie_state_s *parent; // 父节点
     // trie树的左孩子-右兄弟表示方法
     struct _trie_state_s *first; // 子节点
