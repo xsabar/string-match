@@ -13,17 +13,18 @@
  */
 typedef enum {
     STTABLE_TYPE_ARRAY, // 数组实现状态转移表
-    STTABLE_TYPE_HASHT  // 哈希表实现状态转移表
+    STTABLE_TYPE_HASHT, // 哈希表实现状态转移表
+    STTABLE_TYPE_DBARR, // 双数组实现状态转移表
 } STTableType;
 
 /**
  * @brief 状态转移链表节点
  */
-typedef struct _stlist_node {
+typedef struct _stlist_node_s {
     int fid; // 源状态id
     char c;  // 转移字符
     int tid; // 目标状态id
-    struct _stlist_node *next;
+    struct _stlist_node_s *next;
 } stlist_node_t;
 
 /**
@@ -36,7 +37,7 @@ typedef struct {
 /**
  * @brief 状态转移哈希表
  */
-struct _sttable_hasht {
+struct _sttable_hasht_s {
     int cap;  // 容量
     int thrd; // 阈值
     int size; // 大小（元素数量）
@@ -46,16 +47,26 @@ struct _sttable_hasht {
     stlist_node_t *nodes; // 元素集合
 };
 
-struct _sttable_array {
+struct _sttable_array_s {
     int size;
     int *stt;
+};
+
+struct _trie_s;
+
+struct _sttable_dbarr_s {
+    struct _trie_s *trie;
+    int *base;   // 偏移数组
+    int *target; // 目标数组 target[base[fid] + c] = tid
+    int *check;  // 校验数组 check[tid] = fid
 };
 
 typedef struct {
     STTableType type; // 状态转移表类型
     union {
-        struct _sttable_array ast; // 状态转移数组
-        struct _sttable_hasht hst; // 状态转移hash表
+        struct _sttable_array_s ast; // 状态转移-数组
+        struct _sttable_hasht_s hst; // 状态转移-hash表
+        struct _sttable_dbarr_s dst; // 状态转移-双数组
     };
 } sttable_t;
 

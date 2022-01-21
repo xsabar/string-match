@@ -37,19 +37,19 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
 
 static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, int stop, int step);
 
-inline TrieState* trie_insert(Trie *trie, const char *p, int plen) {
+TrieState* trie_insert(Trie *trie, const char *p, int plen) {
     return _trie_insert(trie, p, plen, 0, plen, 1);
 }
 
-inline TrieState* trie_insert_reverse(Trie *trie, const char *p, int plen) {
+TrieState* trie_insert_reverse(Trie *trie, const char *p, int plen) {
     return _trie_insert(trie, p, plen, plen - 1, -1, -1);
 }
 
-inline void trie_set_trans(Trie *trie, int from_id, int to_id, char c) {
+void trie_set_trans(Trie *trie, int from_id, int to_id, char c) {
     sttable_set(trie->sttbl, from_id, c, to_id);
 }
 
-inline int trie_get_trans(const Trie *trie, int state_id, char c) {
+int trie_get_trans(const Trie *trie, int state_id, char c) {
     return sttable_get(trie->sttbl, state_id, c);
 }
 

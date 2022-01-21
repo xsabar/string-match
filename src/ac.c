@@ -36,7 +36,7 @@ void ac_destroy(AC *ac) {
     free(ac);
 }
 
-inline TrieState* ac_insert(AC *ac, const char *p, int plen) {
+TrieState* ac_insert(AC *ac, const char *p, int plen) {
     return trie_insert(ac->trie, p, plen);
 }
 
@@ -65,7 +65,7 @@ static void ac_build_full(AC *ac) {
     // 初始状态满足AC条件
     memset(trie->sttbl->ast.stt, 0, sizeof(int) * CHARSET_SIZE);
     // 层次遍历使各状态依次满足AC条件
-    // 每次层的状态都会暂时和下一层断开连接
+    // 每一层的状态都会暂时和下一层断开连接
     for (int i = 1; i < trie->state_num; i++) {
         TrieState *state = trie->bfs_states[i];
         TrieState *parent = state->parent;

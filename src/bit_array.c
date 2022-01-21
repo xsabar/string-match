@@ -65,7 +65,7 @@ void bit_array_set(bit_array_t *bar, int pos) {
     }
 }
 
-inline int bit_array_get(const bit_array_t *bar, int pos) {
+int bit_array_get(const bit_array_t *bar, int pos) {
     int bucket_id = pos / BIT_ARRAY_BUCKET_BITS;
     int bit_id = pos - bucket_id * BIT_ARRAY_BUCKET_BITS;
     return (bar->bits[bucket_id] & (1 << bit_id)) >> bit_id;
@@ -123,10 +123,10 @@ int bit_array_pop(bit_array_t *bar) {
     return min_bucket_id * BIT_ARRAY_BUCKET_BITS + y - 1;
 }
 
-inline void bit_array_copy(bit_array_t *dest, const bit_array_t *src) {
+void bit_array_copy(bit_array_t *dest, const bit_array_t *src) {
     memcpy(dest, src, sizeof(bit_array_t));
 }
 
-inline int bit_array_empty(bit_array_t *bar) {
+int bit_array_empty(bit_array_t *bar) {
     return bar->min_bucket_id > bar->max_bucket_id;
 }
