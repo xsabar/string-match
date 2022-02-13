@@ -141,7 +141,6 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
     new_state->parent = act_state;
     new_state->next = act_state->first;
     act_state->first = new_state;
-    trie_set_trans(trie, act_state_id, new_state_id, c);
     // 更新树深度
     if (trie->depth < new_state->depth) {
         trie->depth = new_state->depth;
@@ -177,6 +176,7 @@ static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, i
             }
             new_state_id = trie->state_num++;
             trie_insert_new_state(trie, act_state_id, new_state_id, p[i]);
+            trie_set_trans(trie, act_state_id, new_state_id, p[i]);
         } 
         act_state_id = new_state_id;
     }

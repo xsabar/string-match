@@ -1,7 +1,7 @@
 #ifndef _SMIO_H
 #define _SMIO_H
 
-#define CHARSET_SIZE 128
+#define CHARSET_SIZE 256
 
 /**
  * @brief 单个匹配项

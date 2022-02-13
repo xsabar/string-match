@@ -11,7 +11,7 @@ sttable_t* sttable_create(STTableType type) {
         tbl->ast.size = STTABLE_DEFAULT_ARRAY_SIZE;
         tbl->ast.stt = (int *)calloc(STTABLE_DEFAULT_ARRAY_SIZE, sizeof(int));
         memset(tbl->ast.stt, -1, STTABLE_DEFAULT_ARRAY_SIZE * sizeof(int));
-    } else if (type == STTABLE_TYPE_HASHT) {
+    } else {
         tbl->hst.base = STTABLE_HASHT_CAP_BASE;
         tbl->hst.cap = 1 << tbl->hst.base;
         tbl->hst.thrd = STTABLE_HASHT_DEFAULT_THRD;
@@ -20,8 +20,6 @@ sttable_t* sttable_create(STTableType type) {
         // 当hash桶达到负载上限时，状态转移节点数组也同时达到负载上限
         tbl->hst.nodes = (stlist_node_t *)malloc(sizeof(stlist_node_t) * tbl->hst.thrd);
         memset(tbl->hst.nodes, 0, sizeof(stlist_node_t) * tbl->hst.thrd);
-    } else {
-        memset(&tbl->dst, 0, sizeof(struct _sttable_dbarr_s));
     }
     return tbl;
 }
@@ -38,6 +36,15 @@ void sttable_destroy(sttable_t *tbl) {
     }
 }
 
+/**
+ * @brief 数组设置状态转移
+ * 
+ * @param tbl 表指针
+ * @param fid 源状态ID
+ * @param c   转移字符
+ * @param tid 目标状态ID
+ * @return int 0:成功 -1:失败
+ */
 static int _sttable_array_set(struct _sttable_array_s *tbl, int fid, char c, int tid) {
     int index = fid * CHARSET_SIZE + c;
     if (tid * CHARSET_SIZE >= tbl->size) {
@@ -140,6 +147,15 @@ static int _sttable_hasht_extend(struct _sttable_hasht_s *tbl) {
     return 0;
 }
 
+/**
+ * @brief 散列表设置状态转移
+ * 
+ * @param tbl 表指针
+ * @param fid 源状态
+ * @param c   转移字符
+ * @param tid 目标状态
+ * @return int 0:成功 -1:失败
+ */
 static int _sttable_hasht_set(struct _sttable_hasht_s *tbl, int fid, char c, int tid) {
     int h = _sttable_hasht_hash(fid, c, tbl->base);
     stlist_node_t *node = _sttable_hasht_get_node(tbl, fid, c, h);
@@ -167,30 +183,39 @@ static int _sttable_hasht_set(struct _sttable_hasht_s *tbl, int fid, char c, int
     return 0;
 }
 
+/**
+ * @brief 散列表获取状态转移
+ * 
+ * @param tbl 表指针
+ * @param id  源状态
+ * @param c   转移字符
+ * @return int 目标状态
+ */
 static int _sttable_hasht_get(struct _sttable_hasht_s *tbl, int id, char c) {
     int h = _sttable_hasht_hash(id, c, tbl->base);
     stlist_node_t *node = _sttable_hasht_get_node(tbl, id, c, h);
     return node != NULL ? node->tid : -1;
 }
 
-static int _sttable_dbarr_set(struct _sttable_dbarr_s *tbl, int fid, char c, int tid) {
-    //tbl->check[tbl->base[fid] + c] = tid;
-    return 0;
-}
-
 int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
-    if (tbl->type == STTABLE_TYPE_ARRAY) {
-        return _sttable_array_set(&tbl->ast, fid, c, tid);
-    } else {
-        return _sttable_hasht_set(&tbl->hst, fid, c, tid);
+    switch (tbl->type) {
+        case STTABLE_TYPE_ARRAY:
+            return _sttable_array_set(&tbl->ast, fid, c, tid);
+        case STTABLE_TYPE_HASHT:
+            return _sttable_hasht_set(&tbl->hst, fid, c, tid);
+        default:
+            return -1;
     }
 }
 
 int sttable_get(sttable_t *tbl, int id, char c) {
-    if (tbl->type == STTABLE_TYPE_ARRAY) {
-        return tbl->ast.stt[id * CHARSET_SIZE + c];
-    } else {
-        return _sttable_hasht_get(&tbl->hst, id, c);
+    switch (tbl->type) {
+        case STTABLE_TYPE_ARRAY: 
+            return tbl->ast.stt[id * CHARSET_SIZE + c];
+        case STTABLE_TYPE_HASHT:
+            return _sttable_hasht_get(&tbl->hst, id, c);
+        default:
+            return -1;
     }
 }
 

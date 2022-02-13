@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CHARSET_SIZE 128
+#include "smio.h"
 
 /**
  * 单字符串匹配算法

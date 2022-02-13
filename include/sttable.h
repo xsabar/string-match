@@ -1,8 +1,6 @@
 #ifndef _STTABLE_H
 #define _STTABLE_H
 
-#include "smio.h"
-
 #define DEFAULT_STATE_NUM 16
 #define STTABLE_DEFAULT_ARRAY_SIZE (CHARSET_SIZE * DEFAULT_STATE_NUM)
 #define STTABLE_HASHT_CAP_BASE 4 // base=4,cap=2^4=16
@@ -14,7 +12,6 @@
 typedef enum {
     STTABLE_TYPE_ARRAY, // 数组实现状态转移表
     STTABLE_TYPE_HASHT, // 哈希表实现状态转移表
-    STTABLE_TYPE_DBARR, // 双数组实现状态转移表
 } STTableType;
 
 /**
@@ -52,21 +49,11 @@ struct _sttable_array_s {
     int *stt;
 };
 
-struct _trie_s;
-
-struct _sttable_dbarr_s {
-    struct _trie_s *trie;
-    int *base;   // 偏移数组
-    int *target; // 目标数组 target[base[fid] + c] = tid
-    int *check;  // 校验数组 check[tid] = fid
-};
-
 typedef struct {
     STTableType type; // 状态转移表类型
     union {
         struct _sttable_array_s ast; // 状态转移-数组
         struct _sttable_hasht_s hst; // 状态转移-hash表
-        struct _sttable_dbarr_s dst; // 状态转移-双数组
     };
 } sttable_t;
 
