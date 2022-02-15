@@ -214,8 +214,37 @@ static int dat_find_nodes(DATrie *dat, char *list, int fid) {
     return num;
 }
 
-static int dat_change_base(DATrie *dat, int fid, char* list, int num) {
-    return 0;
+/**
+ * @brief 改变节点base值
+ * 
+ * @param dat  双数组trie树指针
+ * @param fid  源节点
+ * @param old_base
+ * @param new_base
+ * @param list 转移字符集合
+ * @param num  转移字符数
+ */
+static void dat_change_base(DATrie *dat, int fid, int old_base, int new_base, char* list, int num) {
+    for (int i = 0; i < num; i++) {
+        int old_tid = old_base + list[i];
+        int new_tid = new_base + list[i];
+        dat_node_t *old_node = &dat->nodes[old_tid];
+        dat_node_t *new_node = &dat->nodes[new_tid];
+        new_node->base = old_node->base;
+        new_node->check = fid;
+        for (int c = 0; c < CHARSET_SIZE; c++) {
+            int ttid = old_node->base + c;
+            if (ttid >= dat->cap) {
+                break;
+            }
+            if (dat->nodes[ttid].check == old_tid) {
+                dat->nodes[ttid].check = new_tid;
+            }
+        }
+        old_node->base = 0;
+        old_node->check = 0;
+    }
+    dat->nodes[fid].base = new_base;
 }
 
 /**
@@ -235,10 +264,14 @@ static int dat_insert_crash(DATrie *dat, int fid, int cid, int c, const char *p)
     int fnum = dat_find_nodes(dat, flist, fid);
     int cnum = dat_find_nodes(dat, clist, cid);
     flist[fnum++] = c;
-    if (fnum >= cnum) {
-        dat_change_base(dat, fid, flist, fnum);
+    if (fnum <= cnum) {
+        int old_base = dat->nodes[fid].base;
+        int new_base = dat_find_base_ex(dat, old_base, flist, fnum);
+        dat_change_base(dat, fid, old_base, new_base, flist, fnum - 1);
     } else {
-        dat_change_base(dat, cid, clist, cnum);
+        int old_base = dat->nodes[cid].base;
+        int new_base = dat_find_base_ex(dat, old_base, clist, cnum);
+        dat_change_base(dat, cid, old_base, new_base, clist, cnum);
     }
     int tid = dat->nodes[fid].base + c;
     dat->nodes[tid].base = -dat->tail.pos;
@@ -286,9 +319,49 @@ void dat_insert(DATrie *dat, const char *p, int plen) {
 }
 
 void dat_delete(DATrie *dat, const char *p, int plen) {
-
+    if (plen <= 0) {
+        return;
+    }
+    // 模式串添加结尾字符，避免一个模式串是另一个模式串的前缀
+    char pattern[plen + 2]; // '#' + '\0'
+    p = dat_add_stop_char(pattern, p, ++plen);
+    for (int i, fid = 1, tid = 1, check = 0, base = 0; i < plen; i++, fid = tid) {
+        tid = dat->nodes[fid].base + p[i];
+        check = tid < dat->cap ? dat->nodes[tid].check : 0;
+        if (check != fid) {
+            break;
+        }
+        base = dat->nodes[tid].base;
+        if (base < 0) {
+            int pos = dat_strcmp(p + i + 1, &dat->tail.str[-base]);
+            if (pos == 0) {
+                dat->nodes[tid].base = 0;
+                dat->nodes[tid].check = 0;
+            }
+            break;
+        }
+    }
 }
 
 void dat_search(const DATrie *dat, const char *s, int slen, match_result_t *result) {
-
+    for (int i = 0; i < slen; i++) {
+        for (int j = i, fid = 1, tid = 1, check = 0, base = 0; j < slen; j++, fid = tid) {
+            tid = dat->nodes[fid].base + s[j];
+            check = tid < dat->cap ? dat->nodes[tid].check : 0;
+            if (check != fid) {
+                break;
+            }
+            base = dat->nodes[tid].base;
+            if (base < 0) {
+                int pos = dat_strcmp(s + j + 1, &dat->tail.str[-base]) - 1;
+                if (dat->tail.str[-base + pos] == '#') {
+                    match_result_append(result, j + pos - i + 1, i);
+                }
+                break;
+            }
+            if (base + DAT_STOP_CHAR < dat->cap && dat->nodes[base + DAT_STOP_CHAR].check == tid) {
+                match_result_append(result, j - i + 1, i);
+            }
+        }
+    }
 }
