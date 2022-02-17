@@ -23,6 +23,7 @@
                 "${workspaceFolder}/src/ac.c",
                 "${workspaceFolder}/src/oracle.c",
                 "${workspaceFolder}/src/wum.c",
+                "${workspaceFolder}/src/dat.c",
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",

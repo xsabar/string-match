@@ -183,7 +183,6 @@ static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, i
     TrieState *state = &trie->states[act_state_id];
     if (!state->is_fin) {
         state->is_fin = 1;
-        state->fid = trie->fin_state_num;
         ++trie->fin_state_num;
     }
     return &trie->states[act_state_id];

@@ -20,6 +20,7 @@ typedef struct {
     int min_len; // 最小模式串长度
     int nsize;   // 字符串节点数组大小
     int pnum;    // 模式串数量
+    int *fids;   // 终止状态ID数组
     orc_slist_t *lists;      // 终止状态对应的字符串链表
     orc_slist_node_t *nodes; // 字符串节点数组
     STTableType sttype;

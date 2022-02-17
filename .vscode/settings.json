@@ -4,6 +4,14 @@
         "functional": "c",
         "__locale": "c",
         "locale": "c",
-        "thread": "c"
+        "thread": "c",
+        "wum.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "oracle.h": "c",
+        "horspool.h": "c",
+        "trie.h": "c",
+        "bndm.h": "c",
+        "shift.h": "c"
     }
 }

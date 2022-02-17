@@ -28,6 +28,7 @@ void oracle_destroy(Oracle *orc) {
         free(orc->nodes[i].str);
     }
     free(orc->nodes);
+    free(orc->fids);
     trie_destroy(orc->trie);
     free(orc);
 }
@@ -92,7 +93,7 @@ void oracle_search(const Oracle *orc, const char *s, int slen, match_result_t *r
         while ((state_id = trie_get_trans(orc->trie, state_id, s[i + j])) != -1) {
             if (j == 0) {
                 TrieState *state = &orc->trie->states[state_id];
-                orc_slist_node_t *node = orc->lists[state->fid].first;
+                orc_slist_node_t *node = orc->lists[orc->fids[state->id]].first;
                 while (node != NULL) {
                     int pos = i + min_len - node->len;
                     if (pos >= 0 && memcmp(s + pos, node->str, node->len - min_len) == 0) {
@@ -108,18 +109,22 @@ void oracle_search(const Oracle *orc, const char *s, int slen, match_result_t *r
 }
 
 static void oracle_build_trie(Oracle *orc) {
-    orc->trie = trie_create(orc->sttype);
-    int min_len = orc->min_len;
-    char reverse[min_len];
     int nfids[orc->pnum];
+    char reverse[orc->min_len];
+    orc->trie = trie_create(orc->sttype);
+    orc->fids = (int*)malloc(sizeof(int) * orc->min_len * orc->pnum);
+    memset(orc->fids, -1, sizeof(int) * orc->min_len * orc->pnum);
     for (int i = 0; i < orc->pnum; i++) {
         orc_slist_node_t *node = &orc->nodes[i];
         // 字符串后缀反转
-        for (int j = node->len - 1, k = 0; j >= node->len - min_len; j--, k++) {
+        for (int j = node->len - 1, k = 0; j >= node->len - orc->min_len; j--, k++) {
             reverse[k] = node->str[j];
         }
-        TrieState *state = trie_insert(orc->trie, reverse, min_len);
-        nfids[i] = state->fid;
+        TrieState *state = trie_insert(orc->trie, reverse, orc->min_len);
+        if (orc->fids[state->id] == -1) {
+            orc->fids[state->id] = orc->trie->fin_state_num - 1;
+        }
+        nfids[i] = orc->fids[state->id];
     }
     // 构造每个终止状态对应的字符串链表
     orc->lists = (orc_slist_t*)calloc(orc->trie->fin_state_num, sizeof(orc_slist_t));
