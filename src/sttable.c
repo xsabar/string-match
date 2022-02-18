@@ -11,7 +11,7 @@ sttable_t* sttable_create(STTableType type) {
         tbl->ast.size = STTABLE_DEFAULT_ARRAY_SIZE;
         tbl->ast.stt = (int *)calloc(STTABLE_DEFAULT_ARRAY_SIZE, sizeof(int));
         memset(tbl->ast.stt, -1, STTABLE_DEFAULT_ARRAY_SIZE * sizeof(int));
-    } else {
+    } else if (type == STTABLE_TYPE_HASHT) {
         tbl->hst.base = STTABLE_HASHT_CAP_BASE;
         tbl->hst.cap = 1 << tbl->hst.base;
         tbl->hst.thrd = STTABLE_HASHT_DEFAULT_THRD;
@@ -20,7 +20,7 @@ sttable_t* sttable_create(STTableType type) {
         // 当hash桶达到负载上限时，状态转移节点数组也同时达到负载上限
         tbl->hst.nodes = (stlist_node_t *)malloc(sizeof(stlist_node_t) * tbl->hst.thrd);
         memset(tbl->hst.nodes, 0, sizeof(stlist_node_t) * tbl->hst.thrd);
-    }
+    } else {}
     return tbl;
 }
 
@@ -28,10 +28,10 @@ void sttable_destroy(sttable_t *tbl) {
     if (tbl != NULL) {
         if (tbl->type == STTABLE_TYPE_ARRAY) {
             free(tbl->ast.stt);
-        } else {
+        } else if (tbl->type == STTABLE_TYPE_HASHT) {
             free(tbl->hst.lists);
             free(tbl->hst.nodes);
-        }
+        } else {}
         free(tbl);
     }
 }
@@ -197,12 +197,25 @@ static int _sttable_hasht_get(struct _sttable_hasht_s *tbl, int id, char c) {
     return node != NULL ? node->tid : -1;
 }
 
+static int _sttable_list_get(struct _sttable_list_s *tbl, int id, char c) {
+    TrieState *state = &tbl->trie->states[tbl->trie->states[id].first];
+    while (state->id != 0) {
+        if (state->c == c) {
+            return state->id;
+        }
+        state = &tbl->trie->states[state->next];
+    }
+    return -1;
+}
+
 int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
     switch (tbl->type) {
         case STTABLE_TYPE_ARRAY:
             return _sttable_array_set(&tbl->ast, fid, c, tid);
         case STTABLE_TYPE_HASHT:
             return _sttable_hasht_set(&tbl->hst, fid, c, tid);
+        case STTABLE_TYPE_LIST:
+            return 0;
         default:
             return -1;
     }
@@ -214,6 +227,8 @@ int sttable_get(sttable_t *tbl, int id, char c) {
             return tbl->ast.stt[id * CHARSET_SIZE + c];
         case STTABLE_TYPE_HASHT:
             return _sttable_hasht_get(&tbl->hst, id, c);
+        case STTABLE_TYPE_LIST:
+            return _sttable_list_get(&tbl->lst, id, c);
         default:
             return -1;
     }

@@ -11,6 +11,9 @@ Trie* trie_create(STTableType sttype) {
     trie->sttbl = sttable_create(sttype);
     trie->states = (TrieState*)calloc(DEFAULT_STATE_NUM, sizeof(TrieState));
     memset(trie->states, 0, sizeof(TrieState) * DEFAULT_STATE_NUM);
+    if (sttype == STTABLE_TYPE_LIST) {
+        trie->sttbl->lst.trie = trie;
+    }
     return trie;
 }
 

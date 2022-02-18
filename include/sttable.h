@@ -10,8 +10,9 @@
  * @brief 状态转移表类型
  */
 typedef enum {
-    STTABLE_TYPE_ARRAY, // 数组实现状态转移表
-    STTABLE_TYPE_HASHT, // 哈希表实现状态转移表
+    STTABLE_TYPE_LIST,  // 链表实现状态转移
+    STTABLE_TYPE_ARRAY, // 数组实现状态转移
+    STTABLE_TYPE_HASHT, // 哈希表实现状态转移
 } STTableType;
 
 /**
@@ -49,11 +50,17 @@ struct _sttable_array_s {
     int *stt;
 };
 
+struct _trie_s;
+struct _sttable_list_s {
+    struct _trie_s *trie;
+};
+
 typedef struct {
     STTableType type; // 状态转移表类型
     union {
+        struct _sttable_list_s  lst; // 状态转移-链表
         struct _sttable_array_s ast; // 状态转移-数组
-        struct _sttable_hasht_s hst; // 状态转移-hash表
+        struct _sttable_hasht_s hst; // 状态转移-散列表
     };
 } sttable_t;
 
