@@ -2,6 +2,7 @@
 #define _DAT_H
 
 #include "smio.h"
+#include "trie.h"
 
 #define DAT_NODE_DEFAULT_NUM 1024
 #define DAT_NODE_INCREMT_NUM 1024
@@ -72,6 +73,8 @@ void dat_destroy(DATrie *dat);
  * @param plen 模式串长度
  */
 void dat_insert(DATrie *dat, const char *p, int plen);
+
+void dat_build(DATrie *dat);
 
 /**
  * @brief 删除模式串

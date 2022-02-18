@@ -63,10 +63,10 @@ void trie_make_bfs(Trie* trie) {
     memset(states, 0, sizeof(TrieState *) * trie->state_num);
     states[0] = &trie->states[0];
     while (next < trie->state_num) {
-        TrieState *state = states[top]->first;
-        while (state != NULL) {
+        TrieState *state = &trie->states[states[top]->first];
+        while (state->id != 0) {
             states[next++] = state;
-            state = state->next;
+            state = &trie->states[state->next];
         }
         ++top;
     }
@@ -103,21 +103,6 @@ static int trie_expand(Trie *trie) {
         return -1;
     }
     memset(states + trie->size, 0, trie->size * sizeof(TrieState)); // 初始化新分配空间
-    // 地址发生变化，更新状态指针
-    if (states != trie->states) {
-        int64_t shift = (int64_t)states - (int64_t)trie->states;
-        for (int i = 0; i < trie->state_num; i++) {
-            if (states[i].parent != NULL) {
-                states[i].parent = (TrieState *)((char *)states[i].parent + shift);
-            }
-            if (states[i].first != NULL) {
-                states[i].first = (TrieState *)((char *)states[i].first + shift);
-            }
-            if (states[i].next != NULL) {
-                states[i].next = (TrieState *)((char *)states[i].next + shift);
-            }
-        }
-    }
     trie->states = states;
     trie->size = size;
     return 0;
@@ -138,9 +123,9 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
     new_state->id = new_state_id;
     new_state->depth = act_state->depth + 1;
     new_state->c = c;
-    new_state->parent = act_state;
+    new_state->parent = act_state_id;
     new_state->next = act_state->first;
-    act_state->first = new_state;
+    act_state->first = new_state_id;
     // 更新树深度
     if (trie->depth < new_state->depth) {
         trie->depth = new_state->depth;

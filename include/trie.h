@@ -8,14 +8,14 @@
  * @brief trie树节点
  */
 typedef struct _trie_state_s {
-    int id;      // 状态id（状态表索引）
-    char c;      // 转移字符
+    char c;        // 转移字符
     int8_t is_fin; // 终止状态标记
-    short depth; // 在树中的深度
-    struct _trie_state_s *parent; // 父节点
-    // trie树的左孩子-右兄弟表示方法
-    struct _trie_state_s *first; // 子节点
-    struct _trie_state_s *next;  // 兄弟节点
+    short depth;   // 在树中的深度
+    int id;        // 状态id（状态表索引）
+    int parent;    // 父节点id
+    // 左孩子-右兄弟表示法
+    int first;     // 子节点id
+    int next;      // 兄弟节点id
 } TrieState;
 
 /**

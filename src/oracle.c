@@ -2,19 +2,18 @@
 #include <string.h>
 #include "oracle.h"
 
-Oracle* oracle_create(STTableType sttype) {
+Oracle* oracle_create() {
     Oracle *orc = (Oracle *)malloc(sizeof(Oracle));
     memset(orc, 0, sizeof(Oracle));
     orc->min_len = INT32_MAX;
     orc->nsize = ORC_DEFAULT_NODE_NUM;
-    orc->sttype = sttype;
     orc->nodes = (orc_slist_node_t *)malloc(sizeof(orc_slist_node_t) * ORC_DEFAULT_NODE_NUM);
     memset(orc->nodes, 0, sizeof(orc_slist_node_t) * ORC_DEFAULT_NODE_NUM);
     return orc;
 }
 
-Oracle* oracle_create_ex(const char *patterns[], int pnum, STTableType sttype) {
-    Oracle *orc = oracle_create(sttype);
+Oracle* oracle_create_ex(const char *patterns[], int pnum) {
+    Oracle *orc = oracle_create();
     for (int i = 0; i < pnum; i++) {
         oracle_insert(orc, patterns[i], strlen(patterns[i]));
     }
@@ -70,7 +69,7 @@ void oracle_build(Oracle *orc) {
     supply[0] = -1;
     for (int i = 1; i < state_num; i++) {
         TrieState* state = orc->trie->bfs_states[i];
-        int sp = state->parent->id;
+        int sp = state->parent;
         int state_id = 0;
         while ((sp = supply[sp]) != -1) {
             state_id = trie_get_trans(orc->trie, sp, state->c);
@@ -111,7 +110,7 @@ void oracle_search(const Oracle *orc, const char *s, int slen, match_result_t *r
 static void oracle_build_trie(Oracle *orc) {
     int nfids[orc->pnum];
     char reverse[orc->min_len];
-    orc->trie = trie_create(orc->sttype);
+    orc->trie = trie_create(STTABLE_TYPE_HASHT);
     orc->fids = (int*)malloc(sizeof(int) * orc->min_len * orc->pnum);
     memset(orc->fids, -1, sizeof(int) * orc->min_len * orc->pnum);
     for (int i = 0; i < orc->pnum; i++) {

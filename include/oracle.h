@@ -23,7 +23,6 @@ typedef struct {
     int *fids;   // 终止状态ID数组
     orc_slist_t *lists;      // 终止状态对应的字符串链表
     orc_slist_node_t *nodes; // 字符串节点数组
-    STTableType sttype;
 } Oracle;
 
 /**
@@ -31,7 +30,7 @@ typedef struct {
  * 
  * @return Oracle* 
  */
-Oracle* oracle_create(STTableType sttype);
+Oracle* oracle_create();
 
 /**
  * @brief 从模式串集合中创建oracle自动机
@@ -40,7 +39,7 @@ Oracle* oracle_create(STTableType sttype);
  * @param pnum     模式串数量
  * @return Oracle* 
  */
-Oracle* oracle_create_ex(const char *patterns[], int pnum, STTableType sttype);
+Oracle* oracle_create_ex(const char *patterns[], int pnum);
 
 /**
  * @brief destroy oracle automation

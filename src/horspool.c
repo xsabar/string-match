@@ -78,7 +78,7 @@ void horspool_build(Horspool *hsp) {
 		TrieState *curr = state;
 		for (int i = state->depth - 1; i >= 0; i--) {
 			pattern[i] = curr->c;
-			curr = curr->parent;
+			curr = &hsp->trie->states[curr->parent];
 		}
 		for (int j = state->depth - hsp->min_len + hsp->block_size - 1; j < state->depth - 1; j++) {
 			int shift = state->depth - j - 1;

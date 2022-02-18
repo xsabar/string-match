@@ -354,7 +354,7 @@ void dat_search(const DATrie *dat, const char *s, int slen, match_result_t *resu
             base = dat->nodes[tid].base;
             if (base < 0) {
                 int pos = dat_strcmp(s + j + 1, &dat->tail.str[-base]) - 1;
-                if (dat->tail.str[-base + pos] == '#') {
+                if (dat->tail.str[-base + pos] == DAT_STOP_CHAR) {
                     match_result_append(result, j + pos - i + 1, i);
                 }
                 break;
