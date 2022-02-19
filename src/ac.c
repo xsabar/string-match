@@ -61,14 +61,15 @@ static void ac_copy_stt(AC *ac, int from_id, int to_id) {
 
 static void ac_build_full(AC *ac) {
     Trie *trie = ac->trie;
-    trie_make_bfs(trie);
+    int *pids = NULL;
+    TrieState **bfs_states = trie_make_bfs(trie, &pids);
     // 初始状态满足AC条件
     memset(trie->sttbl->ast.stt, 0, sizeof(int) * CHARSET_SIZE);
     // 层次遍历使各状态依次满足AC条件
     // 每一层的状态都会暂时和下一层断开连接
     for (int i = 1; i < trie->state_num; i++) {
-        TrieState *state = trie->bfs_states[i];
-        TrieState *parent = &trie->states[state->parent];
+        TrieState *state = bfs_states[i];
+        TrieState *parent = &trie->states[pids[state->id]];
         // 找到当前子串的最长后缀模式串
         int k = trie_get_trans(trie, parent->id, state->c);
         if (trie->states[k].is_fin) {
@@ -81,14 +82,17 @@ static void ac_build_full(AC *ac) {
         // 拷贝状态转移
         ac_copy_stt(ac, k, state->id);
     }
+    free(pids);
+    free(bfs_states);
 }
 
 static void ac_build_part(AC *ac) {
     Trie *trie = ac->trie;
-    trie_make_bfs(trie);
+    int *pids = NULL;
+    TrieState **bfs_states = trie_make_bfs(trie, &pids);
     for (int i = 1; i < trie->state_num; i++) {
-        TrieState *state = trie->bfs_states[i];
-        int j = ac->next[state->parent];
+        TrieState *state = bfs_states[i];
+        int j = ac->next[pids[state->id]];
         while (j != -1) {
             int k = trie_get_trans(trie, j, state->c);
             if (k != -1) {
@@ -105,6 +109,8 @@ static void ac_build_part(AC *ac) {
             }
         }
     }
+    free(pids);
+    free(bfs_states);
 }
 
 void ac_build(AC *ac) {

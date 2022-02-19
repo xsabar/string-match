@@ -28,7 +28,6 @@ Trie* trie_create_ex(const char **patterns, int pnum, STTableType sttype) {
 void trie_destroy(Trie *trie) {
     free(trie->states);
     sttable_destroy(trie->sttbl);
-    free(trie->bfs_states);
     free(trie);
 }
 
@@ -56,24 +55,32 @@ int trie_get_trans(const Trie *trie, int state_id, char c) {
     return sttable_get(trie->sttbl, state_id, c);
 }
 
-void trie_make_bfs(Trie* trie) {
-    if (trie->bfs_states != NULL) {
-        return;
-    }
+TrieState** trie_make_bfs(Trie* trie, int **parents) {
     int top = 0;
     int next = 1;
     TrieState **states = (TrieState **)malloc(sizeof(TrieState *) * trie->state_num);
+    int *pids = NULL;
+    if (parents != NULL) {
+        pids = (int *)malloc(sizeof(int) * trie->state_num);
+        pids[0] = 0;
+    }
     memset(states, 0, sizeof(TrieState *) * trie->state_num);
     states[0] = &trie->states[0];
     while (next < trie->state_num) {
         TrieState *state = &trie->states[states[top]->first];
         while (state->id != 0) {
+            if (pids != NULL) {
+                pids[state->id] = states[top]->id;
+            }
             states[next++] = state;
             state = &trie->states[state->next];
         }
         ++top;
     }
-    trie->bfs_states = states;
+    if (parents != NULL) {
+        *parents = pids;
+    }
+    return states;
 }
 
 void trie_search(const Trie *trie, const char *s, int slen, match_result_t* result) {
@@ -126,7 +133,6 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
     new_state->id = new_state_id;
     new_state->depth = act_state->depth + 1;
     new_state->c = c;
-    new_state->parent = act_state_id;
     new_state->next = act_state->first;
     act_state->first = new_state_id;
     // 更新树深度

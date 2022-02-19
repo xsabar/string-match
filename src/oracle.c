@@ -65,11 +65,12 @@ void oracle_build(Oracle *orc) {
     int state_num = orc->trie->state_num;
     int *supply = (int *) malloc(sizeof(int) * state_num);
     memset(supply, 0, sizeof(int) * state_num);
-    trie_make_bfs(orc->trie);
+    int *pids = NULL;
+    TrieState **bfs_states = trie_make_bfs(orc->trie, &pids);
     supply[0] = -1;
     for (int i = 1; i < state_num; i++) {
-        TrieState* state = orc->trie->bfs_states[i];
-        int sp = state->parent;
+        TrieState* state = bfs_states[i];
+        int sp = pids[state->id];
         int state_id = 0;
         while ((sp = supply[sp]) != -1) {
             state_id = trie_get_trans(orc->trie, sp, state->c);

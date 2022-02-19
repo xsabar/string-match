@@ -68,24 +68,37 @@ void horspool_build(Horspool *hsp) {
 	for (int i = 0; i < hsp->size; i++) {
 		hsp->shift[i] = hsp->min_len - hsp->block_size + 1;
 	}
-	
-	for (int i = 0; i < hsp->trie->state_num; i++) {
-		TrieState *state = &hsp->trie->states[i];
-		if (!state->is_fin) {
-			continue;
-		}
-		char pattern[state->depth];
-		TrieState *curr = state;
-		for (int i = state->depth - 1; i >= 0; i--) {
-			pattern[i] = curr->c;
-			curr = &hsp->trie->states[curr->parent];
-		}
-		for (int j = state->depth - hsp->min_len + hsp->block_size - 1; j < state->depth - 1; j++) {
-			int shift = state->depth - j - 1;
-			int pos = horspool_hash(pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
-			if (hsp->shift[pos] > shift) {
-				hsp->shift[pos] = shift;
+	TrieState *states = hsp->trie->states;
+	TrieState *dfs_states[hsp->trie->depth + 1];
+	char pattern[hsp->trie->depth];
+	dfs_states[0] = &hsp->trie->states[0];
+	TrieState *state = dfs_states[0];
+	int top = 0;
+	// 深度优先遍历
+	state = &states[dfs_states[top]->first];
+	while (state->id != 0) {
+		pattern[top] = state->c;
+		dfs_states[++top] = state;
+		if (state->is_fin) {
+			for (int j = top - hsp->min_len + hsp->block_size - 1; j < top - 1; j++) {
+				int shift = top - j - 1;
+				int pos = horspool_hash(pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
+				if (hsp->shift[pos] > shift) {
+					hsp->shift[pos] = shift;
+				}
 			}
+		}
+		if (state->first == 0) {
+			// 到达叶节点，遍历叶节点的兄弟节点分支
+			--top; // 叶节点出栈
+			state = &states[state->next];
+			while (top != -1 && state->id == 0) {
+				state = &states[dfs_states[top]->next];
+				--top;
+			}
+		} else { 
+			// 非叶节点，继续插入子节点
+			state = &states[state->first];
 		}
 	}
 }
@@ -100,7 +113,7 @@ void horspool_trie_search(const Horspool *hsp, const char *s, int slen, match_re
 			}
 			TrieState *state = &trie->states[state_id];
 			if (state->is_fin) {
-				match_result_append(result, state->depth, j);
+				match_result_append(result, i - j + 1, j);
 			}
 		}
 		int hash = horspool_hash(s + i - hsp->block_size + 1, hsp->block_size, hsp->base);

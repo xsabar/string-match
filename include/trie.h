@@ -12,7 +12,6 @@ typedef struct _trie_state_s {
     int8_t is_fin; // 终止状态标记
     short depth;   // 在树中的深度
     int id;        // 状态id（状态表索引）
-    int parent;    // 父节点id
     // 左孩子-右兄弟表示法
     int first;     // 子节点id
     int next;      // 兄弟节点id
@@ -27,7 +26,6 @@ typedef struct _trie_s {
     TrieState *states; // 状态表
     int fin_state_num; // 终止状态数（模式串数）
     int depth;         // 树深度
-    TrieState **bfs_states; // 按广度优先遍历序存储的状态表
     sttable_t *sttbl;  // 状态转移表
 } Trie;
 
@@ -94,11 +92,12 @@ void trie_set_trans(Trie *trie, int from_id, int to_id, char c);
 int trie_get_trans(const Trie *trie, int state_id, char c);
 
 /**
- * @brief trie树广度优先遍历，遍历结果做缓存
+ * @brief trie树广度优先遍历
  * 
  * @param trie  树指针
+ * @param parents 父节点数组
  */
-void trie_make_bfs(Trie* trie);
+TrieState** trie_make_bfs(Trie* trie, int **parents);
 
 /**
  * @brief trie树多模匹配
