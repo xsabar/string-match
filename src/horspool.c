@@ -72,11 +72,12 @@ void horspool_build(Horspool *hsp) {
 	TrieState *dfs_states[hsp->trie->depth + 1];
 	char pattern[hsp->trie->depth];
 	dfs_states[0] = &hsp->trie->states[0];
-	TrieState *state = dfs_states[0];
+	TrieState *state = NULL;
 	int top = 0;
 	// 深度优先遍历
-	state = &states[dfs_states[top]->first];
-	while (state->id != 0) {
+	int state_id = dfs_states[top]->first;
+	while (state_id != 0) {
+		state = &states[state_id];
 		pattern[top] = state->c;
 		dfs_states[++top] = state;
 		if (state->is_fin) {
@@ -91,14 +92,14 @@ void horspool_build(Horspool *hsp) {
 		if (state->first == 0) {
 			// 到达叶节点，遍历叶节点的兄弟节点分支
 			--top; // 叶节点出栈
-			state = &states[state->next];
-			while (top != -1 && state->id == 0) {
-				state = &states[dfs_states[top]->next];
+			state_id = state->next;
+			while (top != -1 && state_id == 0) {
+				state_id = dfs_states[top]->next;
 				--top;
 			}
 		} else { 
 			// 非叶节点，继续插入子节点
-			state = &states[state->first];
+			state_id = state->first;
 		}
 	}
 }

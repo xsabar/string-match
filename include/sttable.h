@@ -5,6 +5,7 @@
 #define STTABLE_DEFAULT_ARRAY_SIZE (CHARSET_SIZE * DEFAULT_STATE_NUM)
 #define STTABLE_HASHT_CAP_BASE 4 // base=4,cap=2^4=16
 #define STTABLE_HASHT_DEFAULT_THRD  (1 << STTABLE_HASHT_CAP_BASE) * 3 / 4 // (cap * load_factor)
+#define STTABLE_DBARR_DEFAULT_SIZE CHARSET_SIZE
 
 /**
  * @brief 状态转移表类型
@@ -13,6 +14,7 @@ typedef enum {
     STTABLE_TYPE_LIST,  // 链表实现状态转移
     STTABLE_TYPE_ARRAY, // 数组实现状态转移
     STTABLE_TYPE_HASHT, // 哈希表实现状态转移
+    STTABLE_TYPE_DBARR, // 双数组实现状态转移
 } STTableType;
 
 /**
@@ -55,12 +57,21 @@ struct _sttable_list_s {
     struct _trie_s *trie;
 };
 
+struct _sttable_dbarr_s {
+    int cap;    // 容量
+    int size;   // 大小
+    int *base;  // 状态基数
+    int *check; // 来源状态校验
+    int *sids;  // 存储状态id
+};
+
 typedef struct {
     STTableType type; // 状态转移表类型
     union {
         struct _sttable_list_s  lst; // 状态转移-链表
         struct _sttable_array_s ast; // 状态转移-数组
         struct _sttable_hasht_s hst; // 状态转移-散列表
+        struct _sttable_dbarr_s dst; // 状态转移-双数组
     };
 } sttable_t;
 
@@ -70,6 +81,8 @@ typedef struct {
  * @param tbl 表指针
  */
 sttable_t* sttable_create(STTableType type);
+
+//sttable_t* sttable_create_da();
 
 /**
  * @brief 销毁状态转移表

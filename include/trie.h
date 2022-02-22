@@ -11,7 +11,7 @@ typedef struct _trie_state_s {
     char c;        // 转移字符
     int8_t is_fin; // 终止状态标记
     short depth;   // 在树中的深度
-    int id;        // 状态id（状态表索引）
+    int parent;    // 父节点id
     // 左孩子-右兄弟表示法
     int first;     // 子节点id
     int next;      // 兄弟节点id
@@ -22,10 +22,10 @@ typedef struct _trie_state_s {
  */
 typedef struct _trie_s {
     int size;          // 状态表大小
-    int state_num;     // 状态数
-    TrieState *states; // 状态表
-    int fin_state_num; // 终止状态数（模式串数）
     int depth;         // 树深度
+    int state_num;     // 状态数
+    int fin_state_num; // 终止状态数（模式串数）
+    TrieState *states; // 状态表
     sttable_t *sttbl;  // 状态转移表
 } Trie;
 
@@ -57,9 +57,9 @@ void trie_destroy(Trie *trie);
  * @param trie 树指针
  * @param p    模式串
  * @param plen 模式串长度
- * @return TrieState* 终止状态指针
+ * @return int 终止状态id
  */
-TrieState* trie_insert(Trie *trie, const char *p, int plen);
+int trie_insert(Trie *trie, const char *p, int plen);
 
 /**
  * @brief 插入反转模式串
@@ -67,9 +67,9 @@ TrieState* trie_insert(Trie *trie, const char *p, int plen);
  * @param trie 树指针
  * @param p    模式串
  * @param plen 模式串长度
- * @return TrieState* 终止状态指针
+ * @return int 终止状态id
  */
-TrieState* trie_insert_reverse(Trie *trie, const char *p, int plen);
+int trie_insert_reverse(Trie *trie, const char *p, int plen);
 
 /**
  * @brief 设置状态转移
@@ -95,9 +95,11 @@ int trie_get_trans(const Trie *trie, int state_id, char c);
  * @brief trie树广度优先遍历
  * 
  * @param trie  树指针
- * @param parents 父节点数组
+ * @return int* 广度优先遍历状态数组
  */
-TrieState** trie_make_bfs(Trie* trie, int **parents);
+int* trie_make_bfs(Trie* trie);
+
+int trie_sttable(Trie* trie);
 
 /**
  * @brief trie树多模匹配

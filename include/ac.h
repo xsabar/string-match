@@ -46,9 +46,9 @@ void ac_destroy(AC *ac);
  * @param ac   自动机指针
  * @param p    模式串
  * @param plen 模式串长度
- * @return TrieState* 终止状态指针
+ * @return int 终止状态id
  */
-TrieState* ac_insert(AC *ac, const char *p, int plen);
+int ac_insert(AC *ac, const char *p, int plen);
 
 /**
  * @brief 构建AC自动机

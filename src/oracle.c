@@ -65,23 +65,23 @@ void oracle_build(Oracle *orc) {
     int state_num = orc->trie->state_num;
     int *supply = (int *) malloc(sizeof(int) * state_num);
     memset(supply, 0, sizeof(int) * state_num);
-    int *pids = NULL;
-    TrieState **bfs_states = trie_make_bfs(orc->trie, &pids);
+    int *bfs_ids = trie_make_bfs(orc->trie);
     supply[0] = -1;
     for (int i = 1; i < state_num; i++) {
-        TrieState* state = bfs_states[i];
-        int sp = pids[state->id];
+        TrieState* state = &orc->trie->states[bfs_ids[i]];
+        int sp = state->parent;
         int state_id = 0;
         while ((sp = supply[sp]) != -1) {
             state_id = trie_get_trans(orc->trie, sp, state->c);
             if (state_id == -1) {
-                trie_set_trans(orc->trie, sp, state->id, state->c);
+                trie_set_trans(orc->trie, sp, bfs_ids[i], state->c);
             } else {
-                supply[state->id] = state_id;
+                supply[bfs_ids[i]] = state_id;
                 break;
             }
         }
     }
+    free(bfs_ids);
     free(supply);
 }
 
@@ -92,8 +92,7 @@ void oracle_search(const Oracle *orc, const char *s, int slen, match_result_t *r
         int state_id = 0;
         while ((state_id = trie_get_trans(orc->trie, state_id, s[i + j])) != -1) {
             if (j == 0) {
-                TrieState *state = &orc->trie->states[state_id];
-                orc_slist_node_t *node = orc->lists[orc->fids[state->id]].first;
+                orc_slist_node_t *node = orc->lists[orc->fids[state_id]].first;
                 while (node != NULL) {
                     int pos = i + min_len - node->len;
                     if (pos >= 0 && memcmp(s + pos, node->str, node->len - min_len) == 0) {
@@ -120,11 +119,11 @@ static void oracle_build_trie(Oracle *orc) {
         for (int j = node->len - 1, k = 0; j >= node->len - orc->min_len; j--, k++) {
             reverse[k] = node->str[j];
         }
-        TrieState *state = trie_insert(orc->trie, reverse, orc->min_len);
-        if (orc->fids[state->id] == -1) {
-            orc->fids[state->id] = orc->trie->fin_state_num - 1;
+        int state_id = trie_insert(orc->trie, reverse, orc->min_len);
+        if (orc->fids[state_id] == -1) {
+            orc->fids[state_id] = orc->trie->fin_state_num - 1;
         }
-        nfids[i] = orc->fids[state->id];
+        nfids[i] = orc->fids[state_id];
     }
     // 构造每个终止状态对应的字符串链表
     orc->lists = (orc_slist_t*)calloc(orc->trie->fin_state_num, sizeof(orc_slist_t));

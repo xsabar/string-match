@@ -31,6 +31,10 @@ void sttable_destroy(sttable_t *tbl) {
         } else if (tbl->type == STTABLE_TYPE_HASHT) {
             free(tbl->hst.lists);
             free(tbl->hst.nodes);
+        } else if (tbl->type == STTABLE_TYPE_DBARR) {
+            free(tbl->dst.base);
+            free(tbl->dst.check);
+            free(tbl->dst.sids);
         } else {}
         free(tbl);
     }
@@ -59,6 +63,18 @@ static int _sttable_array_set(struct _sttable_array_s *tbl, int fid, char c, int
     }
     tbl->stt[index] = tid;
     return 0;
+}
+
+/**
+ * @brief 数组获取状态转移
+ * 
+ * @param tbl 表指针
+ * @param id  源状态id
+ * @param c   转移字符
+ * @return int 目标状态id
+ */
+static int _sttable_array_get(struct _sttable_array_s *tbl, int id, char c) {
+    return tbl->stt[id * CHARSET_SIZE + c];
 }
 
 /**
@@ -198,12 +214,22 @@ static int _sttable_hasht_get(struct _sttable_hasht_s *tbl, int id, char c) {
 }
 
 static int _sttable_list_get(struct _sttable_list_s *tbl, int id, char c) {
-    TrieState *state = &tbl->trie->states[tbl->trie->states[id].first];
-    while (state->id != 0) {
+    int child = tbl->trie->states[id].first;
+    TrieState *state = NULL;
+    while (child != 0) {
+        state = &tbl->trie->states[child];
         if (state->c == c) {
-            return state->id;
+            return child;
         }
-        state = &tbl->trie->states[state->next];
+        child = state->next;
+    }
+    return -1;
+}
+
+static int _sttable_dbarr_get(struct _sttable_dbarr_s *tbl, int id, char c) {
+    int cid = tbl->base[id] + c;
+    if (tbl->check[cid] == id) {
+        return tbl->sids[cid];
     }
     return -1;
 }
@@ -216,6 +242,8 @@ int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
             return _sttable_hasht_set(&tbl->hst, fid, c, tid);
         case STTABLE_TYPE_LIST:
             return 0;
+        case STTABLE_TYPE_DBARR:
+            return 0;
         default:
             return -1;
     }
@@ -224,11 +252,13 @@ int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
 int sttable_get(sttable_t *tbl, int id, char c) {
     switch (tbl->type) {
         case STTABLE_TYPE_ARRAY: 
-            return tbl->ast.stt[id * CHARSET_SIZE + c];
+            return _sttable_array_get(&tbl->ast, id, c);
         case STTABLE_TYPE_HASHT:
             return _sttable_hasht_get(&tbl->hst, id, c);
         case STTABLE_TYPE_LIST:
             return _sttable_list_get(&tbl->lst, id, c);
+        case STTABLE_TYPE_DBARR:
+            return _sttable_dbarr_get(&tbl->dst, id, c);
         default:
             return -1;
     }

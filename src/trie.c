@@ -35,15 +35,15 @@ static int trie_expand(Trie *trie);
 
 static int trie_set_fin_state(Trie *trie, TrieState *state, const char *p, int plen);
 
-static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_state_id, char c);
+static int trie_insert_new_state(Trie *trie, int act_state_id, int new_state_id, char c);
 
-static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, int stop, int step);
+static int _trie_insert(Trie *trie, const char *p, int plen, int start, int stop, int step);
 
-TrieState* trie_insert(Trie *trie, const char *p, int plen) {
+int trie_insert(Trie *trie, const char *p, int plen) {
     return _trie_insert(trie, p, plen, 0, plen, 1);
 }
 
-TrieState* trie_insert_reverse(Trie *trie, const char *p, int plen) {
+int trie_insert_reverse(Trie *trie, const char *p, int plen) {
     return _trie_insert(trie, p, plen, plen - 1, -1, -1);
 }
 
@@ -55,32 +55,20 @@ int trie_get_trans(const Trie *trie, int state_id, char c) {
     return sttable_get(trie->sttbl, state_id, c);
 }
 
-TrieState** trie_make_bfs(Trie* trie, int **parents) {
+int* trie_make_bfs(Trie* trie) {
     int top = 0;
     int next = 1;
-    TrieState **states = (TrieState **)malloc(sizeof(TrieState *) * trie->state_num);
-    int *pids = NULL;
-    if (parents != NULL) {
-        pids = (int *)malloc(sizeof(int) * trie->state_num);
-        pids[0] = 0;
-    }
-    memset(states, 0, sizeof(TrieState *) * trie->state_num);
-    states[0] = &trie->states[0];
+    int *bfs = (int *)malloc(sizeof(int) * trie->state_num);
+    memset(bfs, 0, sizeof(int) * trie->state_num);
     while (next < trie->state_num) {
-        TrieState *state = &trie->states[states[top]->first];
-        while (state->id != 0) {
-            if (pids != NULL) {
-                pids[state->id] = states[top]->id;
-            }
-            states[next++] = state;
-            state = &trie->states[state->next];
+        int id = trie->states[bfs[top]].first;
+        while (id != 0) {
+            bfs[next++] = id;
+            id = trie->states[id].next;
         }
         ++top;
     }
-    if (parents != NULL) {
-        *parents = pids;
-    }
-    return states;
+    return bfs;
 }
 
 void trie_search(const Trie *trie, const char *s, int slen, match_result_t* result) {
@@ -125,12 +113,12 @@ static int trie_expand(Trie *trie) {
  * @param act_state_id 激活状态
  * @param new_state_id 转移状态
  * @param c            转移字符
- * @return TrieState* 转移状态指针
+ * @return int 转移状态id
  */
-static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_state_id, char c) {
+static int trie_insert_new_state(Trie *trie, int act_state_id, int new_state_id, char c) {
     TrieState *act_state = &trie->states[act_state_id];
     TrieState *new_state = &trie->states[new_state_id];
-    new_state->id = new_state_id;
+    new_state->parent = act_state_id;
     new_state->depth = act_state->depth + 1;
     new_state->c = c;
     new_state->next = act_state->first;
@@ -139,7 +127,7 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
     if (trie->depth < new_state->depth) {
         trie->depth = new_state->depth;
     }
-    return new_state;
+    return new_state_id;
 }
 
 /**
@@ -151,11 +139,11 @@ static TrieState* trie_insert_new_state(Trie *trie, int act_state_id, int new_st
  * @param start 开始位置
  * @param stop  结束位置
  * @param step  步长
- * @return TrieState* 状态指针
+ * @return int 状态id
  */
-static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, int stop, int step) {
+static int _trie_insert(Trie *trie, const char *p, int plen, int start, int stop, int step) {
     if (plen <= 0) {
-        return NULL;
+        return -1;
     }
     int act_state_id = 0;
     int new_state_id = 0;
@@ -165,7 +153,7 @@ static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, i
             if (trie->size <= trie->state_num) {
                 // 内存扩展可能会使地址发生变化
                 if (trie_expand(trie) != 0) {
-                    return NULL;
+                    return -1;
                 }
             }
             new_state_id = trie->state_num++;
@@ -179,5 +167,5 @@ static TrieState* _trie_insert(Trie *trie, const char *p, int plen, int start, i
         state->is_fin = 1;
         ++trie->fin_state_num;
     }
-    return &trie->states[act_state_id];
+    return act_state_id;
 }
