@@ -57,12 +57,18 @@ struct _sttable_list_s {
     struct _trie_s *trie;
 };
 
+/**
+ * @brief 双数组状态转移表
+ * 借鉴double array trie双数组原理
+ */
 struct _sttable_dbarr_s {
-    int cap;    // 容量
-    int size;   // 大小
-    int *base;  // 状态基数
-    int *check; // 来源状态校验
-    int *sids;  // 存储状态id
+    struct _trie_s *trie; // 树指针
+    int bsize; // base数组大小
+    int tsize; // target数组大小
+    int *base;   // 状态基数
+    int *target; // 目标状态id
+    // tid = target[base[fid] + c]
+    // trie->states[tid].parent = fid
 };
 
 typedef struct {

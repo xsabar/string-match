@@ -97,9 +97,7 @@ int trie_get_trans(const Trie *trie, int state_id, char c);
  * @param trie  树指针
  * @return int* 广度优先遍历状态数组
  */
-int* trie_make_bfs(Trie* trie);
-
-int trie_sttable(Trie* trie);
+int* trie_make_bfs(Trie *trie);
 
 /**
  * @brief trie树多模匹配

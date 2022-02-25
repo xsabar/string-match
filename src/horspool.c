@@ -53,7 +53,7 @@ static int horspool_hash(const char *str, int len, int base) {
     return (hash ^ (hash >> base)) & ((1 << base) - 1);
 }
 
-void horspool_build(Horspool *hsp) {
+static void horspool_build_init(Horspool *hsp) {
 	if (hsp->block_size >= hsp->min_len) {
 		hsp->block_size = hsp->min_len;
 	}
@@ -68,33 +68,43 @@ void horspool_build(Horspool *hsp) {
 	for (int i = 0; i < hsp->size; i++) {
 		hsp->shift[i] = hsp->min_len - hsp->block_size + 1;
 	}
+}
+
+static void horspool_build_shift(Horspool *hsp, TrieState *state, const char *pattern) {
+	int shift = 0;
+	int pos = 0;
+	for (int j = state->depth - hsp->min_len + hsp->block_size - 1; j < state->depth - 1; j++) {
+		shift = state->depth - j - 1;
+		pos = horspool_hash(pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
+		if (hsp->shift[pos] > shift) {
+			hsp->shift[pos] = shift;
+		}
+	}
+}
+
+void horspool_build(Horspool *hsp) {
+	horspool_build_init(hsp);
 	TrieState *states = hsp->trie->states;
-	TrieState *dfs_states[hsp->trie->depth + 1];
+	int dfs[hsp->trie->depth + 1];
 	char pattern[hsp->trie->depth];
-	dfs_states[0] = &hsp->trie->states[0];
 	TrieState *state = NULL;
 	int top = 0;
-	// 深度优先遍历
-	int state_id = dfs_states[top]->first;
+	memset(dfs, 0, sizeof(dfs));
+	// 深度优先搜索
+	int state_id = states[dfs[top]].first;
 	while (state_id != 0) {
+		dfs[++top] = state_id;
 		state = &states[state_id];
-		pattern[top] = state->c;
-		dfs_states[++top] = state;
+		pattern[hsp->trie->depth - top - 1] = state->c;
 		if (state->is_fin) {
-			for (int j = top - hsp->min_len + hsp->block_size - 1; j < top - 1; j++) {
-				int shift = top - j - 1;
-				int pos = horspool_hash(pattern + j - hsp->block_size + 1, hsp->block_size, hsp->base);
-				if (hsp->shift[pos] > shift) {
-					hsp->shift[pos] = shift;
-				}
-			}
+			horspool_build_shift(hsp, state, pattern + hsp->trie->depth - top);
 		}
 		if (state->first == 0) {
 			// 到达叶节点，遍历叶节点的兄弟节点分支
 			--top; // 叶节点出栈
 			state_id = state->next;
 			while (top != -1 && state_id == 0) {
-				state_id = dfs_states[top]->next;
+				state_id = states[dfs[top]].next;
 				--top;
 			}
 		} else { 

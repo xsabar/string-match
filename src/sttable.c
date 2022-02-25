@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "sttable.h"
 #include "trie.h"
+#include "internal/sttable_dbarr.h"
 
 sttable_t* sttable_create(STTableType type) {
     sttable_t *tbl = (sttable_t *)malloc(sizeof(sttable_t));
@@ -20,6 +21,13 @@ sttable_t* sttable_create(STTableType type) {
         // 当hash桶达到负载上限时，状态转移节点数组也同时达到负载上限
         tbl->hst.nodes = (stlist_node_t *)malloc(sizeof(stlist_node_t) * tbl->hst.thrd);
         memset(tbl->hst.nodes, 0, sizeof(stlist_node_t) * tbl->hst.thrd);
+    } else if (type == STTABLE_TYPE_DBARR) {
+        tbl->dst.bsize = DEFAULT_STATE_NUM;
+        tbl->dst.base = (int *)malloc(sizeof(int) * DEFAULT_STATE_NUM);
+        memset(tbl->dst.base, 0, sizeof(int) * DEFAULT_STATE_NUM);
+        tbl->dst.tsize = STTABLE_DBARR_DEFAULT_SIZE;
+        tbl->dst.target = (int *)malloc(sizeof(int) * STTABLE_DBARR_DEFAULT_SIZE);
+        memset(tbl->dst.target, 0, sizeof(int) * STTABLE_DBARR_DEFAULT_SIZE);
     } else {}
     return tbl;
 }
@@ -33,8 +41,7 @@ void sttable_destroy(sttable_t *tbl) {
             free(tbl->hst.nodes);
         } else if (tbl->type == STTABLE_TYPE_DBARR) {
             free(tbl->dst.base);
-            free(tbl->dst.check);
-            free(tbl->dst.sids);
+            free(tbl->dst.target);
         } else {}
         free(tbl);
     }
@@ -226,14 +233,6 @@ static int _sttable_list_get(struct _sttable_list_s *tbl, int id, char c) {
     return -1;
 }
 
-static int _sttable_dbarr_get(struct _sttable_dbarr_s *tbl, int id, char c) {
-    int cid = tbl->base[id] + c;
-    if (tbl->check[cid] == id) {
-        return tbl->sids[cid];
-    }
-    return -1;
-}
-
 int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
     switch (tbl->type) {
         case STTABLE_TYPE_ARRAY:
@@ -243,7 +242,7 @@ int sttable_set(sttable_t *tbl, int fid, char c, int tid) {
         case STTABLE_TYPE_LIST:
             return 0;
         case STTABLE_TYPE_DBARR:
-            return 0;
+            return sttable_dbarr_set(&tbl->dst, fid, c, tid);
         default:
             return -1;
     }
@@ -258,7 +257,7 @@ int sttable_get(sttable_t *tbl, int id, char c) {
         case STTABLE_TYPE_LIST:
             return _sttable_list_get(&tbl->lst, id, c);
         case STTABLE_TYPE_DBARR:
-            return _sttable_dbarr_get(&tbl->dst, id, c);
+            return sttable_dbarr_get(&tbl->dst, id, c);
         default:
             return -1;
     }

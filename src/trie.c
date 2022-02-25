@@ -14,6 +14,9 @@ Trie* trie_create(STTableType sttype) {
     if (sttype == STTABLE_TYPE_LIST) {
         trie->sttbl->lst.trie = trie;
     }
+    if (sttype == STTABLE_TYPE_DBARR) {
+        trie->sttbl->dst.trie = trie;
+    }
     return trie;
 }
 
