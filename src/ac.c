@@ -7,7 +7,7 @@ AC* ac_create(ACLevel level) {
     if (level == AC_LEVEL_FULL) {
         ac->trie = trie_create(STTABLE_TYPE_ARRAY);
     } else {
-        ac->trie = trie_create(STTABLE_TYPE_HASHT);
+        ac->trie = trie_create(STTABLE_TYPE_DBARR);
     }
     ac->level = level;
     ac->suff = NULL;
@@ -20,7 +20,7 @@ AC* ac_create_ex(const char *patterns[], int pnum, ACLevel level) {
     if (level == AC_LEVEL_FULL) {
         ac->trie = trie_create_ex(patterns, pnum, STTABLE_TYPE_ARRAY);
     } else {
-        ac->trie = trie_create_ex(patterns, pnum, STTABLE_TYPE_HASHT);
+        ac->trie = trie_create_ex(patterns, pnum, STTABLE_TYPE_DBARR);
     }
     ac->level = level;
     ac->suff = NULL;

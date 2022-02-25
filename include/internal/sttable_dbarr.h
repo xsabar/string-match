@@ -1,4 +1,3 @@
-#include "sttable.h"
 #include "trie.h"
 
 /**

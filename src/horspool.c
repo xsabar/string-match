@@ -6,7 +6,7 @@
 Horspool* horspool_create(int block_size) {
 	Horspool *hsp = (Horspool *)malloc(sizeof(Horspool));
 	memset(hsp, 0, sizeof(Horspool));
-	hsp->trie = trie_create(STTABLE_TYPE_HASHT);
+	hsp->trie = trie_create(STTABLE_TYPE_DBARR);
 	hsp->min_len = INT32_MAX;
 	hsp->block_size = block_size;
 	return hsp;
